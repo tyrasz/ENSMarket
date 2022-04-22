@@ -1,11 +1,15 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Greeter", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
+beforeEach(async() => {
+
+});
+
+describe("ENSMarket", function () {
+  it("Should deploy a ENSMarket contract", async function () {
+    const ENSMarket = await ethers.getContractFactory("ENSMarket");
+    const ensMarket = await ENSMarket.deploy();
+    await ensMarket.deployed();
 
     expect(await greeter.greet()).to.equal("Hello, world!");
 
