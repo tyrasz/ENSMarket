@@ -5,10 +5,10 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "hardhat/console.sol";
 
 contract ENSMarket {
-	
+
 	enum ListingStatus {
 		Active,
-		Sold,
+		Rented,
 		Cancelled
 	}
 
@@ -28,9 +28,9 @@ contract ENSMarket {
 		uint price
 	);
 
-	event Sale(
+	event Rental(
 		uint listingId,
-		address buyer,
+		address renter,
 		address token,
 		uint tokenId,
 		uint price
@@ -72,20 +72,20 @@ contract ENSMarket {
 		return _listings[listingId];
 	}
 
-	function buyToken(uint listingId) external payable {
+	function rentToken(uint listingId) external payable {
 		Listing storage listing = _listings[listingId];
 
-		require(msg.sender != listing.seller, "Seller cannot be buyer");
+		require(msg.sender != listing.seller, "Seller cannot be renter");
 		require(listing.status == ListingStatus.Active, "Listing is not active");
 
 		require(msg.value >= listing.price, "Insufficient payment");
 
-		listing.status = ListingStatus.Sold;
+		listing.status = ListingStatus.Rented;
 
 		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
 		payable(listing.seller).transfer(listing.price);
 
-		emit Sale(
+		emit Rental(
 			listingId,
 			msg.sender,
 			listing.token,
