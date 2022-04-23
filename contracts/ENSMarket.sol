@@ -21,7 +21,7 @@ contract ENSMarket {
 	struct Listing {
 		ListingStatus status;
 		RentalMoneyStatus rentalStatus;
-		address seller;
+		address lister;
 		address token;
 		uint tokenId;
 		uint price;
@@ -29,7 +29,7 @@ contract ENSMarket {
 
 	event Listed(
 		uint listingId,
-		address seller,
+		address lister,
 		address token,
 		uint tokenId,
 		uint price
@@ -45,13 +45,13 @@ contract ENSMarket {
 
 	event Cancel(
 		uint listingId,
-		address seller
+		address lister
 	);
 
 	event RentalClaimed(
 		uint listingID,
 		RentalMoneyStatus rentalStatus,
-		address seller,
+		address lister,
 		address token,
 		uint tokenId,
 		uint price
@@ -92,7 +92,7 @@ contract ENSMarket {
 	function rentToken(uint listingId) external payable {
 		Listing storage listing = _listings[listingId];
 
-		require(msg.sender != listing.seller, "Seller cannot be renter");
+		require(msg.sender != listing.lister, "Lister cannot be renter");
 		require(listing.status == ListingStatus.Active, "Listing is not active");
 
 		require(msg.value >= listing.price, "Insufficient payment");
@@ -101,7 +101,7 @@ contract ENSMarket {
 		listing.rentalStatus = RentalMoneyStatus.Available;
 
 		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
-		payable(listing.seller).transfer(listing.price);
+		payable(listing.lister).transfer(listing.price);
 
 		emit Rental(
 			listingId,
@@ -115,21 +115,21 @@ contract ENSMarket {
 	function cancel(uint listingId) public {
 		Listing storage listing = _listings[listingId];
 
-		require(msg.sender == listing.seller, "Only seller can cancel listing");
+		require(msg.sender == listing.lister, "Only lister can cancel listing");
 		require(listing.status == ListingStatus.Active, "Listing is not active");
 
 		listing.status = ListingStatus.Cancelled;
 	
 		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
 
-		emit Cancel(listingId, listing.seller);
+		emit Cancel(listingId, listing.lister);
 	}
 
 	function claimRent(uint listingId) public {
 
 		Listing storage listing = _listings[listingId];
 
-		require(msg.sender == listing.seller, "Only seller can claim rental");
+		require(msg.sender == listing.lister, "Only lister can claim rental");
 		require(listing.status == ListingStatus.Rented, "Token has not been rented");
 
 		listing.rentalStatus = RentalMoneyStatus.Claimed;
