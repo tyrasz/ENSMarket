@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ensdomains/ens-contracts": "^0.0.11",
+    "@ethereum-waffle/provider": "^3.4.4",
     "@openzeppelin/contracts": "^4.5.0",
     "hardhat": "^2.9.3"
   },
