@@ -12,8 +12,15 @@ contract ENSMarket {
 		Cancelled
 	}
 
+	enum RentalMoneyStatus {
+		Initialised,
+		Available,
+		Claimed
+	}
+
 	struct Listing {
 		ListingStatus status;
+		RentalMoneyStatus rentalStatus;
 		address seller;
 		address token;
 		uint tokenId;
@@ -41,6 +48,15 @@ contract ENSMarket {
 		address seller
 	);
 
+	event RentalClaimed(
+		uint listingID,
+		RentalMoneyStatus rentalStatus,
+		address seller,
+		address token,
+		uint tokenId,
+		uint price
+	);
+
 	uint private _listingId = 0;
 	mapping(uint => Listing) private _listings;
 
@@ -49,6 +65,7 @@ contract ENSMarket {
 
 		Listing memory listing = Listing(
 			ListingStatus.Active,
+			RentalMoneyStatus.Initialised,
 			msg.sender,
 			token,
 			tokenId,
@@ -81,6 +98,7 @@ contract ENSMarket {
 		require(msg.value >= listing.price, "Insufficient payment");
 
 		listing.status = ListingStatus.Rented;
+		listing.rentalStatus = RentalMoneyStatus.Available;
 
 		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
 		payable(listing.seller).transfer(listing.price);
@@ -105,5 +123,25 @@ contract ENSMarket {
 		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
 
 		emit Cancel(listingId, listing.seller);
+	}
+
+	function claimRent(uint listingId) public {
+
+		Listing storage listing = _listings[listingId];
+
+		require(msg.sender == listing.seller, "Only seller can claim rental");
+		require(listing.status == ListingStatus.Rented, "Token has not been rented");
+
+		listing.rentalStatus = RentalMoneyStatus.Claimed;
+		payable(msg.sender).transfer(listing.price);
+
+		emit RentalClaimed(
+			listingId,
+			listing.rentalStatus,
+			msg.sender,
+			listing.token,
+			listing.tokenId,
+			listing.price
+		);
 	}
 }
