@@ -131,6 +131,7 @@ contract ENSMarket {
 
 		require(msg.sender == listing.seller, "Only seller can claim rental");
 		require(listing.status == ListingStatus.Rented, "Token has not been rented");
+		require(listing.rentalStatus == RentalMoneyStatus.Available, "Stop double claiming");
 
 		listing.rentalStatus = RentalMoneyStatus.Claimed;
 		payable(msg.sender).transfer(listing.price);
