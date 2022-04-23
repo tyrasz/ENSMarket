@@ -9,7 +9,8 @@ contract ENSMarket {
 	enum ListingStatus {
 		Active,
 		Rented,
-		Cancelled
+		Cancelled, 
+		Completed
 	}
 
 	enum RentalMoneyStatus {
@@ -20,7 +21,7 @@ contract ENSMarket {
 
 	struct Listing {
 		ListingStatus status;
-		RentalMoneyStatus rentalStatus;
+		uint numberOfDays;
 		address lister;
 		address token;
 		uint tokenId;
@@ -48,9 +49,9 @@ contract ENSMarket {
 		address lister
 	);
 
-	event RentalClaimed(
+	event Reclaim(
 		uint listingID,
-		RentalMoneyStatus rentalStatus,
+		ListingStatus status,
 		address lister,
 		address token,
 		uint tokenId,
@@ -60,12 +61,12 @@ contract ENSMarket {
 	uint private _listingId = 0;
 	mapping(uint => Listing) private _listings;
 
-	function listToken(address token, uint tokenId, uint price) external {
-		IERC721(token).transferFrom(msg.sender, address(this), tokenId);
+	function listToken(address token, uint tokenId, uint price, uint256 numberOfDays) external {
+		IERC721(token).safeTransferFrom(msg.sender, address(this), tokenId);
 
 		Listing memory listing = Listing(
 			ListingStatus.Active,
-			RentalMoneyStatus.Initialised,
+			numberOfDays,
 			msg.sender,
 			token,
 			tokenId,
@@ -92,16 +93,18 @@ contract ENSMarket {
 	function rentToken(uint listingId) external payable {
 		Listing storage listing = _listings[listingId];
 
+		//TODO: Get token's Resolver
+
+		//TODO: Set token's registrant to this contract
+
 		require(msg.sender != listing.lister, "Lister cannot be renter");
 		require(listing.status == ListingStatus.Active, "Listing is not active");
 
 		require(msg.value >= listing.price, "Insufficient payment");
 
 		listing.status = ListingStatus.Rented;
-		listing.rentalStatus = RentalMoneyStatus.Available;
 
-		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
-		payable(listing.lister).transfer(listing.price);
+		payable(address(this)).transfer(listing.price);
 
 		emit Rental(
 			listingId,
@@ -120,25 +123,25 @@ contract ENSMarket {
 
 		listing.status = ListingStatus.Cancelled;
 	
-		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
+		IERC721(listing.token).safeTransferFrom(address(this), msg.sender, listing.tokenId);
 
 		emit Cancel(listingId, listing.lister);
 	}
 
-	function claimRent(uint listingId) public {
+	function reclaim(uint listingId) public {
 
 		Listing storage listing = _listings[listingId];
 
-		require(msg.sender == listing.lister, "Only lister can claim rental");
-		require(listing.status == ListingStatus.Rented, "Token has not been rented");
-		require(listing.rentalStatus == RentalMoneyStatus.Available, "Stop double claiming");
+		require(msg.sender == listing.lister, "Only lister can reclaim token");
+		require(listing.status == ListingStatus.Active, "Token has been rented out");
+		
+		IERC721(listing.token).safeTransferFrom(address(this), msg.sender, listing.tokenId);
 
-		listing.rentalStatus = RentalMoneyStatus.Claimed;
-		payable(msg.sender).transfer(listing.price);
+		listing.status = ListingStatus.Completed;
 
-		emit RentalClaimed(
+		emit Reclaim(
 			listingId,
-			listing.rentalStatus,
+			listing.status,
 			msg.sender,
 			listing.token,
 			listing.tokenId,
