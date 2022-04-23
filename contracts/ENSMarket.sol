@@ -70,7 +70,7 @@ contract ENSMarket {
 	address private constant BaseRegistrarContract = 0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85;
 
 	function listToken(address token, uint tokenId, uint price, uint256 numberOfDays) external {
-		IERC721(token).safeTransferFrom(msg.sender, address(this), tokenId);
+		IERC721(token).transferFrom(msg.sender, address(this), tokenId);
 
 		Listing memory listing = Listing(
 			ListingStatus.Active,
@@ -137,7 +137,7 @@ contract ENSMarket {
 
 		listing.status = ListingStatus.Cancelled;
 	
-		IERC721(listing.token).safeTransferFrom(address(this), msg.sender, listing.tokenId);
+		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
 		emit Cancel(listingId, listing.lister);
 	}
 
@@ -149,7 +149,7 @@ contract ENSMarket {
 		require(listing.status == ListingStatus.Active, "Token has been rented out");
 		require((listing.dateRented + (listing.numberOfDays)*24*60*60) < block.timestamp, "Domain can only be reclaimed after rental period has expired");
 		
-		IERC721(listing.token).safeTransferFrom(address(this), msg.sender, listing.tokenId);
+		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
 
 		//Setting controller to owner
 		IBaseRegistrarInterface(BaseRegistrarContract).reclaim(listingId, msg.sender);
