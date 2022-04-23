@@ -30,6 +30,7 @@ contract ENSMarket {
 		address token;
 		uint tokenId;
 		uint price;
+		uint256 dateRented;
 	}
 
 	event Listed(
@@ -45,7 +46,8 @@ contract ENSMarket {
 		address renter,
 		address token,
 		uint tokenId,
-		uint price
+		uint price,
+		uint dateRented
 	);
 
 	event Cancel(
@@ -76,7 +78,8 @@ contract ENSMarket {
 			msg.sender,
 			token,
 			tokenId,
-			price
+			price,
+			0
 		);
 
 		_listingId++;
@@ -109,6 +112,7 @@ contract ENSMarket {
 		require(msg.value >= listing.price, "Insufficient payment");
 
 		listing.status = ListingStatus.Rented;
+		listing.dateRented = block.timestamp;
 
 		//Setting controller to renter
 		IBaseRegistrarInterface(BaseRegistrarContract).reclaim(listingId, msg.sender);
@@ -120,7 +124,8 @@ contract ENSMarket {
 			msg.sender,
 			listing.token,
 			listing.tokenId,
-			listing.price
+			listing.price,
+			listing.dateRented
 		);
 	}
 
@@ -133,7 +138,6 @@ contract ENSMarket {
 		listing.status = ListingStatus.Cancelled;
 	
 		IERC721(listing.token).safeTransferFrom(address(this), msg.sender, listing.tokenId);
-
 		emit Cancel(listingId, listing.lister);
 	}
 
@@ -143,6 +147,7 @@ contract ENSMarket {
 
 		require(msg.sender == listing.lister, "Only lister can reclaim token");
 		require(listing.status == ListingStatus.Active, "Token has been rented out");
+		require((listing.dateRented + (listing.numberOfDays)*24*60*60) < block.timestamp, "Domain can only be reclaimed after rental period has expired");
 		
 		IERC721(listing.token).safeTransferFrom(address(this), msg.sender, listing.tokenId);
 
