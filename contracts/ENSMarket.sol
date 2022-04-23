@@ -61,8 +61,9 @@ contract ENSMarket {
 	mapping(uint => Listing) private _listings;
 
 	function listToken(address token, uint tokenId, uint price) external {
-		IERC721(token).transferFrom(msg.sender, address(this), tokenId);
+		IERC721(token).safeTransferFrom(msg.sender, address(this), tokenId);
 
+	
 		Listing memory listing = Listing(
 			ListingStatus.Active,
 			RentalMoneyStatus.Initialised,
@@ -100,8 +101,7 @@ contract ENSMarket {
 		listing.status = ListingStatus.Rented;
 		listing.rentalStatus = RentalMoneyStatus.Available;
 
-		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
-		payable(listing.lister).transfer(listing.price);
+		payable(address(this)).transfer(listing.price);
 
 		emit Rental(
 			listingId,
@@ -120,7 +120,7 @@ contract ENSMarket {
 
 		listing.status = ListingStatus.Cancelled;
 	
-		IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
+		IERC721(listing.token).safeTransferFrom(address(this), msg.sender, listing.tokenId);
 
 		emit Cancel(listingId, listing.lister);
 	}
