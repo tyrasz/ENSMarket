@@ -4,6 +4,10 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "hardhat/console.sol";
 
+interface IBaseRegistrarInterface {
+	function reclaim(uint256 id, address owner) external;
+}
+
 contract ENSMarket {
 
 	enum ListingStatus {
@@ -61,6 +65,8 @@ contract ENSMarket {
 	uint private _listingId = 0;
 	mapping(uint => Listing) private _listings;
 
+	address private constant BaseRegistrarContract = 0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85;
+
 	function listToken(address token, uint tokenId, uint price, uint256 numberOfDays) external {
 		IERC721(token).safeTransferFrom(msg.sender, address(this), tokenId);
 
@@ -104,7 +110,10 @@ contract ENSMarket {
 
 		listing.status = ListingStatus.Rented;
 
-		payable(address(this)).transfer(listing.price);
+		//Setting controller to renter
+		IBaseRegistrarInterface(BaseRegistrarContract).reclaim(listingId, msg.sender);
+
+		payable(listing.lister).transfer(listing.price);
 
 		emit Rental(
 			listingId,
@@ -136,6 +145,9 @@ contract ENSMarket {
 		require(listing.status == ListingStatus.Active, "Token has been rented out");
 		
 		IERC721(listing.token).safeTransferFrom(address(this), msg.sender, listing.tokenId);
+
+		//Setting controller to owner
+		IBaseRegistrarInterface(BaseRegistrarContract).reclaim(listingId, msg.sender);
 
 		listing.status = ListingStatus.Completed;
 
