@@ -99,6 +99,12 @@ contract ENSMarket {
 		return _listings[listingId];
 	}
 
+	receive() external payable{
+	}
+
+	fallback() external payable{
+	}
+
 	function rentToken(uint listingId) external payable {
 		Listing storage listing = _listings[listingId];
 
@@ -116,7 +122,7 @@ contract ENSMarket {
 
 		//Setting controller to renter
 		IBaseRegistrarInterface(BaseRegistrarContract).reclaim(listingId, msg.sender);
-
+		
 		payable(listing.lister).transfer(listing.price);
 
 		emit Rental(
