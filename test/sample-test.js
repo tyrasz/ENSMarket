@@ -58,7 +58,8 @@ describe("ENSMarket", function () {
     });
 
     it("Should execute listing", async function () {
-        const msg = await mockENS.approve(ensMarket.address, tokenId);
+        // const msg = await mockENS.approve(ensMarket.address, tokenId);
+        const msg = await mockENS.setApprovalForAll(ensMarket.address, true)
         console.log(msg)
         await expect(
             ensMarket.listToken(

@@ -66,6 +66,7 @@ contract ENSMarket {
 
 	uint private _listingId = 0;
 	mapping(uint => Listing) private _listings;
+    Listing[] public listingArray;
 
 	address private constant BaseRegistrarContract = 0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85;
 
@@ -81,6 +82,8 @@ contract ENSMarket {
 			price,
 			0
 		);
+
+        listingArray.push(listing);
 
 		_listingId++;
 
@@ -171,4 +174,5 @@ contract ENSMarket {
 			listing.price
 		);
 	}
+    
 }
