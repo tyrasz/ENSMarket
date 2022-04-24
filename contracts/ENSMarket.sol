@@ -102,6 +102,10 @@ contract ENSMarket {
 		return _listings[listingId];
 	}
 
+    function getAllListings() public view returns (Listing[] memory) {
+        return listingArray;
+    }
+
 	receive() external payable{
 	}
 
