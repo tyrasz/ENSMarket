@@ -10,6 +10,8 @@ interface IBaseRegistrarInterface {
 
 contract ENSMarket {
 
+	
+
 	enum ListingStatus {
 		Active,
 		Rented,
@@ -67,6 +69,14 @@ contract ENSMarket {
 	uint private _listingId = 0;
 	mapping(uint => Listing) private _listings;
     Listing[] public listingArray;
+
+	address owner;
+
+	//modifier for onlyOwner
+	modifier onlyOwner {
+      require(msg.sender == owner);
+      _;
+   	}
 
 	address private constant BaseRegistrarContract = 0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85;
 
@@ -178,5 +188,11 @@ contract ENSMarket {
 			listing.price
 		);
 	}
+
+	//function selfdestruct to reclaim for testing. Remove in production
+	function destroySmartContract(address payable _to) public onlyOwner {
+        require(msg.sender == owner, "You are not the owner");
+        selfdestruct(_to);
+    }
     
 }
